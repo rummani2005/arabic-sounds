@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لعبة الأصوات العربية</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Tahoma, Arial, sans-serif;
+  background: linear-gradient(135deg, #e0f7fa, #fff8e1);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #263238;
+}
+
+.game {
+  width: min(95%, 650px);
+  background: white;
+  border-radius: 28px;
+  padding: 25px;
+  box-shadow: 0 10px 35px rgba(0,0,0,.15);
+  text-align: center;
+}
+
+h1 {
+  color: #1565c0;
+  font-size: 34px;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 20px;
+  margin-bottom: 25px;
+}
+
+button {
+  border: none;
+  border-radius: 18px;
+  padding: 15px 25px;
+  margin: 8px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  background: #1976d2;
+  color: white;
+  transition: .2s;
+}
+
+button:hover {
+  transform: scale(1.04);
+}
+
+.levels button:nth-child(1) {
+  background: #43a047;
+}
+
+.levels button:nth-child(2) {
+  background: #8e24aa;
+}
+
+.levels button:nth-child(3) {
+  background: #fb8c00;
+}
+
+.hidden {
+  display: none;
+}
+
+.score {
+  display: flex;
+  justify-content: space-around;
+  background: #f5f5f5;
+  border-radius: 15px;
+  padding: 12px;
+  margin-bottom: 20px;
+  font-size: 19px;
+}
+
+.question {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 25px 0;
+}
+
+.character {
+  font-size: 90px;
+  color: #1565c0;
+  margin: 15px;
+}
+
+.answers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.answers button {
+  background: #eceff1;
+  color: #263238;
+  font-size: 30px;
+}
+
+.feedback {
+  min-height: 45px;
+  font-size: 22px;
+  font-weight: bold;
+  margin: 15px;
+}
+
+.correct {
+  color: #2e7d32;
+}
+
+.wrong {
+  color: #c62828;
+}
+
+.stars {
+  font-size: 35px;
+  margin: 15px;
+}
+
+@media(max-width:500px) {
+  h1 {
+    font-size: 28px;
+  }
+
+  .character {
+    font-size: 75px;
+  }
+
+  button {
+    font-size: 18px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+  <section id="home">
+    <h1>🎮 لعبة الأصوات العربية</h1>
+
+    <div class="subtitle">
+      تعلّم الأصوات القصيرة والمدود والمقطع الساكن بطريقة ممتعة!
+    </div>
+
+    <div class="levels">
+      <button onclick="startGame('short')">
+        🔵 الأصوات القصيرة
+      </button>
+
+      <button onclick="startGame('long')">
+        🟣 المدود
+      </button>
+
+      <button onclick="startGame('sukun')">
+        🟠 المقطع الساكن
+      </button>
+    </div>
+  </section>
+
+  <section id="gameScreen" class="hidden">
+
+    <div class="score">
+      <span>⭐ النقاط: <b id="score">0</b></span>
+      <span>السؤال: <b id="questionNumber">1</b>/5</span>
+    </div>
+
+    <div id="question" class="question"></div>
+
+    <div id="character" class="character"></div>
+
+    <button onclick="speakQuestion()">🔊 اسمع</button>
+
+    <div id="answers" class="answers"></div>
+
+    <div id="feedback" class="feedback"></div>
+
+    <button id="nextButton" class="hidden" onclick="nextQuestion()">
+      السؤال التالي ➡️
+    </button>
+
+  </section>
+
+  <section id="result" class="hidden">
+
+    <h1>🎉 أحسنت!</h1>
+
+    <div class="stars">⭐⭐⭐⭐⭐</div>
+
+    <p style="font-size:25px;">
+      نتيجتك:
+      <b id="finalScore"></b>
+    </p>
+
+    <button onclick="goHome()">
+      🏠 العودة للرئيسية
+    </button>
+
+  </section>
+
+</div>
+
+<script>
+
+let level = "";
+let score = 0;
+let currentQuestion = 0;
+
+const questions = {
+
+short: [
+  {
+    character: "بَ",
+    question: "ما الصوت القصير في المقطع؟",
+    answers: ["فَتْحَة", "ضَمَّة", "كَسْرَة", "مَدّ"],
+    correct: 0
+  },
+  {
+    character: "بُ",
+    question: "ما الحركة على حرف الباء؟",
+    answers: ["فَتْحَة", "ضَمَّة", "كَسْرَة", "سُكُون"],
+    correct: 1
+  },
+  {
+    character: "بِ",
+    question: "ما الحركة على حرف الباء؟",
+    answers: ["ضَمَّة", "فَتْحَة", "كَسْرَة", "مَدّ"],
+    correct: 2
+  },
+  {
+    character: "مَ",
+    question: "ما الصوت القصير؟",
+    answers: ["مَ", "مُ", "مِ", "ما"],
+    correct: 0
+  },
+  {
+    character: "دِ",
+    question: "اختر الحركة الصحيحة.",
+    answers: ["فَتْحَة", "كَسْرَة", "ضَمَّة", "مَدّ"],
+    correct: 1
+  }
+],
+
+long: [
+  {
+    character: "بَا",
+    question: "ما حرف المد في (بَا)؟",
+    answers: ["الألف", "الواو", "الياء", "لا يوجد"],
+    correct: 0
+  },
+  {
+    character: "بُو",
+    question: "ما حرف المد في (بُو)؟",
+    answers: ["الألف", "الواو", "الياء", "السكون"],
+    correct: 1
+  },
+  {
+    character: "بِي",
+    question: "ما حرف المد في (بِي)؟",
+    answers: ["الألف", "الواو", "الياء", "الفتحة"],
+    correct: 2
+  },
+  {
+    character: "مَا",
+    question: "هذا الصوت يسمى:",
+    answers: ["صوت قصير", "مد بالألف", "مد بالواو", "مد بالياء"],
+    correct: 1
+  },
+  {
+    character: "نُو",
+    question: "هذا الصوت يسمى:",
+    answers: ["مد بالألف", "مد بالواو", "مد بالياء", "سكون"],
+    correct: 1
+  }
+],
+
+sukun: [
+  {
+    character: "أَبْ",
+    question: "ما علامة السكون؟",
+    answers: ["َ", "ُ", "ِ", "ْ"],
+    correct: 3
+  },
+  {
+    character: "مِنْ",
+    question: "أي حرف عليه السكون؟",
+    answers: ["م", "ن", "ي", "لا يوجد"],
+    correct: 1
+  },
+  {
+    character: "بَحْر",
+    question: "أين المقطع الساكن؟",
+    answers: ["بَ", "حْ", "ر", "لا يوجد"],
+    correct: 1
+  },
+  {
+    character: "يَكْتُب",
+    question: "ما الحرف الساكن؟",
+    answers: ["ي", "ك", "ت", "ب"],
+    correct: 1
+  },
+  {
+    character: "مَكْتَب",
+    question: "اختر المقطع الساكن.",
+    answers: ["مَ", "كْ", "تَ", "ب"],
+    correct: 1
+  }
+]
+
+};
+
+function startGame(selectedLevel) {
+
+  level = selectedLevel;
+  score = 0;
+  currentQuestion = 0;
+
+  document.getElementById("home").classList.add("hidden");
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("gameScreen").classList.remove("hidden");
+
+  showQuestion();
+}
+
+function showQuestion() {
+
+  const q = questions[level][currentQuestion];
+
+  document.getElementById("score").textContent = score;
+  document.getElementById("questionNumber").textContent =
+    currentQuestion + 1;
+
+  document.getElementById("question").textContent = q.question;
+  document.getElementById("character").textContent = q.character;
+
+  const answersDiv = document.getElementById("answers");
+
+  answersDiv.innerHTML = "";
+
+  document.getElementById("feedback").textContent = "";
+
+  document.getElementById("nextButton").classList.add("hidden");
+
+  q.answers.forEach((answer, index) => {
+
+    const button = document.createElement("button");
+
+    button.textContent = answer;
+
+    button.onclick = () => checkAnswer(index);
+
+    answersDiv.appendChild(button);
+
+  });
+}
+
+function checkAnswer(index) {
+
+  const q = questions[level][currentQuestion];
+
+  const feedback = document.getElementById("feedback");
+
+  if(index === q.correct) {
+
+    score += 10;
+
+    feedback.textContent = "🎉 أحسنت! إجابة صحيحة!";
+    feedback.className = "feedback correct";
+
+  } else {
+
+    feedback.textContent =
+      "💡 حاول مرة أخرى! الإجابة الصحيحة هي: " +
+      q.answers[q.correct];
+
+    feedback.className = "feedback wrong";
+  }
+
+  document.querySelectorAll("#answers button")
+    .forEach(button => button.disabled = true);
+
+  document.getElementById("nextButton")
+    .classList.remove("hidden");
+
+}
+
+function nextQuestion() {
+
+  currentQuestion++;
+
+  if(currentQuestion >= questions[level].length) {
+
+    showResult();
+
+  } else {
+
+    showQuestion();
+
+  }
+}
+
+function showResult() {
+
+  document.getElementById("gameScreen")
+    .classList.add("hidden");
+
+  document.getElementById("result")
+    .classList.remove("hidden");
+
+  document.getElementById("finalScore")
+    .textContent = score + " / 50";
+}
+
+function goHome() {
+
+  document.getElementById("result")
+    .classList.add("hidden");
+
+  document.getElementById("home")
+    .classList.remove("hidden");
+}
+
+function speakQuestion() {
+
+  const text =
+    document.getElementById("character").textContent;
+
+  if("speechSynthesis" in window) {
+
+    const utterance =
+      new SpeechSynthesisUtterance(text);
+
+    utterance.lang = "ar-SA";
+
+    utterance.rate = 0.75;
+
+    speechSynthesis.speak(utterance);
+  }
+}
+
+</script>
+
+</body>
+</html>
