@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مغامرة الأصوات العربية — الإصدار الثالث</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:linear-gradient(135deg,#e8f5e9,#e3f2fd,#fff8e1);min-height:100vh;color:#263238}
+.app{width:min(96%,780px);margin:12px auto;background:#fff;border-radius:28px;box-shadow:0 12px 40px rgba(0,0,0,.14);padding:18px;min-height:calc(100vh - 24px)}
+h1{font-size:clamp(28px,7vw,44px);color:#1565c0;margin:8px 0}
+.tag{font-size:18px;color:#546e7a;margin-bottom:18px;line-height:1.6}
+.panel{background:#f7f9fb;border-radius:22px;padding:18px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+button{border:0;border-radius:17px;padding:14px 18px;font-size:18px;font-weight:700;cursor:pointer;transition:.15s}
+button:hover{transform:translateY(-2px)}
+button:disabled{cursor:not-allowed;opacity:.75;transform:none}
+.level{min-height:105px;color:#fff}
+.short{background:#2e7d32}.long{background:#7b1fa2}.sukun{background:#ef6c00}.mixed{background:#1565c0}
+.stats{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pill{background:#fff;padding:9px 13px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.08);font-size:17px}
+.progress{height:12px;background:#e0e0e0;border-radius:10px;overflow:hidden;margin-bottom:18px}
+.bar{height:100%;background:#43a047;width:0;transition:.3s}
+.question{font-size:24px;font-weight:800;line-height:1.5;margin:12px 0}
+.big{font-size:clamp(60px,16vw,110px);font-weight:800;color:#1565c0;margin:10px}
+.answers{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.answer{background:#eceff1;color:#263238;min-height:65px}
+.answer.correct{background:#2e7d32;color:#fff}
+.answer.wrong{background:#c62828;color:#fff}
+.feedback{min-height:48px;font-size:20px;font-weight:700;margin:14px 0;line-height:1.5}
+.ok{color:#2e7d32}.bad{color:#c62828}
+.actions{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:12px}
+.small{font-size:15px;padding:10px 13px;background:#607d8b;color:#fff}
+.hidden{display:none!important}
+.stars{font-size:38px;margin:12px}
+.letters{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.letter{padding:11px 3px;font-size:23px;background:#e3f2fd;color:#1565c0}
+.letter.done{background:#c8e6c9;color:#1b5e20}
+.rule{font-size:18px;line-height:1.8;background:#fff8e1;border-radius:15px;padding:12px}
+.badge{display:inline-block;background:#fff3cd;border-radius:20px;padding:6px 12px;margin:3px;font-size:15px}
+@media(max-width:520px){
+ .app{padding:13px;margin:6px auto;min-height:calc(100vh - 12px)}
+ .grid{grid-template-columns:1fr}
+ .answers{grid-template-columns:1fr}
+ .letters{grid-template-columns:repeat(7,1fr)}
+ .letter{font-size:18px;padding:9px 2px}
+ .question{font-size:21px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<section id="home">
+<h1>🎮 مغامرة الأصوات العربية</h1>
+<div class="tag">الإصدار الثالث — تعلّم، العب، واجمع النجوم!<br>جميع الحروف العربية الـ28 • أسئلة متنوعة • بدون تكرار داخل الجولة</div>
+
+<div class="panel">
+<div class="question">اختر المغامرة</div>
+<div class="grid">
+<button class="level short" onclick="startGame('short')">🔵<br>الأصوات القصيرة</button>
+<button class="level long" onclick="startGame('long')">🟣<br>المدود</button>
+<button class="level sukun" onclick="startGame('sukun')">🟠<br>المقطع الساكن</button>
+<button class="level mixed" onclick="startGame('mixed')">🏆<br>التحدي الشامل</button>
+</div>
+</div>
+
+<div class="panel">
+<div class="question">🧩 ما المقطع الساكن؟</div>
+<div class="rule">
+<strong>المقطع الساكن = حرفان:</strong><br>
+الأول متحرك + الثاني ساكن<br><br>
+<strong>مَكْ = مَ + كْ</strong><br>
+في كلمة <strong>مَكْتَب</strong> المقطع الساكن هو <strong>مَكْ</strong> ✅
+</div>
+</div>
+
+<div class="panel">
+<div class="question">🔤 خريطة الحروف</div>
+<div id="letterMap" class="letters"></div>
+</div>
+</section>
+
+<section id="game" class="hidden">
+<div class="stats">
+<span class="pill">⭐ النقاط: <b id="score">0</b></span>
+<span class="pill">🔥 متتالية: <b id="streak">0</b></span>
+<span class="pill">السؤال: <b id="qn">1</b>/10</span>
+</div>
+<div class="progress"><div id="bar" class="bar"></div></div>
+
+<div class="panel">
+<div id="question" class="question"></div>
+<div id="big" class="big"></div>
+<div class="actions"><button class="small" onclick="speakCurrent()">🔊 اسمع</button></div>
+<div id="answers" class="answers"></div>
+<div id="feedback" class="feedback"></div>
+<div class="actions">
+<button id="nextBtn" class="hidden" onclick="nextQuestion()">التالي ➡️</button>
+<button class="small" onclick="goHome()">🏠 الرئيسية</button>
+</div>
+</div>
+</section>
+
+<section id="result" class="hidden">
+<h1>🎉 أحسنت!</h1>
+<div id="resultStars" class="stars">⭐⭐⭐⭐⭐</div>
+<div class="panel">
+<p style="font-size:25px">نتيجتك: <b id="finalScore"></b></p>
+<p id="resultMessage" style="font-size:21px;line-height:1.7"></p>
+</div>
+<button onclick="goHome()">🏠 العودة للرئيسية</button>
+</section>
+
+</div>
+
+<script>
+const LETTERS=["ا","ب","ت","ث","ج","ح","خ","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ع","غ","ف","ق","ك","ل","م","ن","هـ","و","ي"];
+const SHORT=[
+  ["َ","فَتْحَة"],["ُ","ضَمَّة"],["ِ","كَسْرَة"]
+];
+
+/* أمثلة صحيحة للمقطع الساكن: حرف أول متحرك + حرف ثان ساكن. */
+const SUKUN_SYLLABLES=[
+  ["أَبْ","أَبْ"],["أَخْ","أَخْ"],["أَمْ","أَمْ"],["أَنْ","أَنْ"],
+  ["بَحْ","بَحْ"],["بَتْ","بَتْ"],["بَدْ","بَدْ"],["بَرْ","بَرْ"],
+  ["تَحْ","تَحْ"],["تَبْ","تَبْ"],["تَمْ","تَمْ"],
+  ["جَدْ","جَدْ"],["جَمْ","جَمْ"],["جَرْ","جَرْ"],
+  ["حَبْ","حَبْ"],["حَمْ","حَمْ"],["حَقْ","حَقْ"],
+  ["خَلْ","خَلْ"],["خَبْ","خَبْ"],["خَرْ","خَرْ"],
+  ["دَرْ","دَرْ"],["دَخْ","دَخْ"],["دَمْ","دَمْ"],
+  ["ذَهْ","ذَهْ"],["ذَرْ","ذَرْ"],
+  ["رَبْ","رَبْ"],["رَحْ","رَحْ"],["رَمْ","رَمْ"],
+  ["زَرْ","زَرْ"],["زَمْ","زَمْ"],
+  ["سَمْ","سَمْ"],["سَجْ","سَجْ"],["سَلْ","سَلْ"],
+  ["شَمْ","شَمْ"],["شَرْ","شَرْ"],
+  ["صَبْ","صَبْ"],["صَدْ","صَدْ"],
+  ["ضَمْ","ضَمْ"],
+  ["طَبْ","طَبْ"],["طَلْ","طَلْ"],
+  ["ظَلْ","ظَلْ"],
+  ["عَبْ","عَبْ"],["عَدْ","عَدْ"],["عَنْ","عَنْ"],
+  ["غَفْ","غَفْ"],["غَرْ","غَرْ"],
+  ["فَهْ","فَهْ"],["فَتْ","فَتْ"],
+  ["قَدْ","قَدْ"],["قَلْ","قَلْ"],
+  ["كَتْ","كَتْ"],["كَمْ","كَمْ"],["مَكْ","مَكْ"],
+  ["لَمْ","لَمْ"],["لَبْ","لَبْ"],
+  ["مَنْ","مَنْ"],["مَدْ","مَدْ"],["مَسْ","مَسْ"],
+  ["نَجْ","نَجْ"],["نَفْ","نَفْ"],
+  ["هَلْ","هَلْ"],["هَمْ","هَمْ"],
+  ["وَجْ","وَجْ"],["وَقْ","وَقْ"],
+  ["يَكْ","يَكْ"],["يَسْ","يَسْ"]
+];
+
+const WORDS=[
+  ["مَكْتَب","مَكْ"],["مَدْرَسَة","مَدْ"],["يَكْتُب","يَكْ"],
+  ["بَحْر","بَحْ"],["لَمْ","لَمْ"],["قَدْ","قَدْ"],
+  ["هَلْ","هَلْ"],["عَنْ","عَنْ"],["مَسْجِد","مَسْ"],
+  ["يَفْهَم","يَفْ"],["مَفْتَاح","مَفْ"],["يَجْلِس","يَجْ"]
+];
+
+let state={mode:"short",items:[],index:0,score:0,streak:0,answered:false,mastery:{}};
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-0.5)}
+
+function shortQuestions(){
+  const out=[];
+  LETTERS.forEach(letter=>{
+    SHORT.forEach(([mark,name])=>{
+      const choices=shuffle([name,"فَتْحَة","ضَمَّة","كَسْرَة"]).slice(0,4);
+      out.push({type:"short",display:letter+mark,question:"ما الحركة في هذا المقطع؟",choices,answer:name,key:letter+mark});
+    });
+  });
+  return out;
+}
+
+function longQuestions(){
+  const out=[];
+  LETTERS.forEach(letter=>{
+    out.push({type:"long",display:letter+"َا",question:"ما حرف المد في هذا المقطع؟",choices:shuffle(["الألف","الواو","الياء","لا يوجد"]),answer:"الألف",key:letter+"ا"});
+    out.push({type:"long",display:letter+"ُو",question:"ما حرف المد في هذا المقطع؟",choices:shuffle(["الألف","الواو","الياء","لا يوجد"]),answer:"الواو",key:letter+"و"});
+    out.push({type:"long",display:letter+"ِي",question:"ما حرف المد في هذا المقطع؟",choices:shuffle(["الألف","الواو","الياء","لا يوجد"]),answer:"الياء",key:letter+"ي"});
+  });
+  return out;
+}
+
+function sukunQuestions(){
+  const out=[];
+  SUKUN_SYLLABLES.forEach(([s])=>{
+    const wrong=shuffle(SUKUN_SYLLABLES.filter(x=>x[0]!==s).map(x=>x[0])).slice(0,3);
+    out.push({type:"sukun",display:s,question:"اختر المقطع الساكن الصحيح.",choices:shuffle([s,...wrong]),answer:s,key:s});
+  });
+  WORDS.forEach(([word,syllable])=>{
+    const wrong=shuffle(WORDS.filter(x=>x[1]!==syllable).map(x=>x[1])).slice(0,3);
+    out.push({type:"word",display:word,question:"أين المقطع الساكن في الكلمة؟",choices:shuffle([syllable,...wrong]),answer:syllable,key:word});
+  });
+  return out;
+}
+
+function buildPool(mode){
+  if(mode==="short") return shortQuestions();
+  if(mode==="long") return longQuestions();
+  if(mode==="sukun") return sukunQuestions();
+  return [...shortQuestions(),...longQuestions(),...sukunQuestions()];
+}
+
+function chooseUnique(mode,count=10){
+  const pool=shuffle(buildPool(mode));
+  const chosen=[],seen=new Set();
+  for(const q of pool){
+    if(!seen.has(q.key)){seen.add(q.key);chosen.push(q)}
+    if(chosen.length===count)break;
+  }
+  return chosen;
+}
+
+function renderMap(){
+  const map=document.getElementById("letterMap");
+  map.innerHTML="";
+  LETTERS.forEach(l=>{
+    const b=document.createElement("button");
+    b.className="letter"+(state.mastery[l]?" done":"");
+    b.textContent=l;
+    map.appendChild(b);
+  });
+}
+
+function startGame(mode){
+  state={...state,mode,items:chooseUnique(mode,10),index:0,score:0,streak:0,answered:false};
+  document.getElementById("home").classList.add("hidden");
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  showQuestion();
+}
+
+function showQuestion(){
+  const q=state.items[state.index];
+  state.answered=false;
+  document.getElementById("score").textContent=state.score;
+  document.getElementById("streak").textContent=state.streak;
+  document.getElementById("qn").textContent=state.index+1;
+  document.getElementById("bar").style.width=(state.index/state.items.length*100)+"%";
+  document.getElementById("question").textContent=q.question;
+  document.getElementById("big").textContent=q.display;
+  document.getElementById("feedback").textContent="";
+  document.getElementById("feedback").className="feedback";
+  document.getElementById("nextBtn").classList.add("hidden");
+
+  const box=document.getElementById("answers");
+  box.innerHTML="";
+  shuffle(q.choices).forEach(choice=>{
+    const b=document.createElement("button");
+    b.className="answer";
+    b.textContent=choice;
+    b.onclick=()=>checkAnswer(choice,b);
+    box.appendChild(b);
+  });
+}
+
+function checkAnswer(choice,button){
+  if(state.answered)return;
+  state.answered=true;
+  const q=state.items[state.index];
+  const correct=choice===q.answer;
+  document.querySelectorAll(".answer").forEach(b=>b.disabled=true);
+  const fb=document.getElementById("feedback");
+
+  if(correct){
+    state.score+=10;
+    state.streak++;
+    button.classList.add("correct");
+    fb.textContent=state.streak>=3?"🔥 رائع! ثلاث إجابات متتالية!":"🎉 أحسنت! إجابة صحيحة!";
+    fb.className="feedback ok";
+  }else{
+    state.streak=0;
+    button.classList.add("wrong");
+    fb.textContent="💡 الإجابة الصحيحة: "+q.answer;
+    fb.className="feedback bad";
+    [...document.querySelectorAll(".answer")].find(b=>b.textContent===q.answer)?.classList.add("correct");
+  }
+
+  document.getElementById("score").textContent=state.score;
+  document.getElementById("streak").textContent=state.streak;
+  document.getElementById("nextBtn").classList.remove("hidden");
+}
+
+function nextQuestion(){
+  state.index++;
+  if(state.index>=state.items.length) finishGame();
+  else showQuestion();
+}
+
+function finishGame(){
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("result").classList.remove("hidden");
+  const max=state.items.length*10;
+  const pct=state.score/max;
+  document.getElementById("finalScore").textContent=state.score+" / "+max;
+  document.getElementById("resultStars").textContent=pct>=.9?"⭐⭐⭐⭐⭐":pct>=.7?"⭐⭐⭐⭐":pct>=.5?"⭐⭐⭐":"⭐⭐";
+  document.getElementById("resultMessage").textContent=
+    pct>=.9?"🏆 أداء رائع! أنت بطل الأصوات العربية!":
+    pct>=.7?"🌟 ممتاز! واصل التدريب لتصل إلى الإتقان الكامل.":
+    "💪 بداية جميلة! أعد الجولة وحاول أن تحطم نتيجتك.";
+  document.getElementById("bar").style.width="100%";
+}
+
+function goHome(){
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("home").classList.remove("hidden");
+  renderMap();
+}
+
+function speakCurrent(){
+  if(!("speechSynthesis" in window))return;
+  speechSynthesis.cancel();
+  const text=document.getElementById("big").textContent;
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang="ar-SA";
+  u.rate=.72;
+  speechSynthesis.speak(u);
+}
+
+renderMap();
+</script>
+</body>
+</html>
