@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لعبة آخر حرفين</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Tahoma, sans-serif;
+  background: #eef3f8;
+  color: #172033;
+}
+
+.container {
+  max-width: 760px;
+  margin: auto;
+  padding: 16px;
+}
+
+.game {
+  background: white;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0,0,0,.12);
+}
+
+header {
+  background: #17324d;
+  color: white;
+  padding: 25px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0 0 7px;
+  font-size: 30px;
+}
+
+#screen {
+  padding: 20px;
+}
+
+.center {
+  text-align: center;
+}
+
+.info {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.info div {
+  flex: 1;
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+}
+
+.info strong {
+  display: block;
+  font-size: 20px;
+}
+
+.ending {
+  text-align: center;
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+.ending span {
+  display: inline-block;
+  background: #f4e4a6;
+  color: #503b00;
+  padding: 8px 22px;
+  border-radius: 15px;
+  font-size: 38px;
+  font-weight: bold;
+  margin-top: 7px;
+}
+
+.question {
+  background: #f6f8fb;
+  border: 1px solid #e1e6ee;
+  border-radius: 20px;
+  padding: 30px 16px;
+  text-align: center;
+  font-size: 25px;
+  font-weight: bold;
+  line-height: 1.7;
+}
+
+.answer {
+  display: none;
+  margin-top: 18px;
+  background: #e9f6ee;
+  color: #176238;
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 30px;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+button {
+  border: none;
+  border-radius: 13px;
+  padding: 15px;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.start {
+  background: #17324d;
+  color: white;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.show {
+  background: #f2c94c;
+}
+
+.correct {
+  background: #2e9d61;
+  color: white;
+}
+
+.wrong {
+  background: #d9534f;
+  color: white;
+}
+
+.next {
+  background: #17324d;
+  color: white;
+}
+
+@media(max-width:520px) {
+  .buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .question {
+    font-size: 22px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<div class="game">
+
+<header>
+<h1>🎯 لعبة آخر حرفين</h1>
+<p>جميع إجابات الجولة تنتهي بالحرفين نفسيهما</p>
+</header>
+
+<div id="screen"></div>
+
+</div>
+</div>
+
+<script>
+
+var rounds = [
+
+{
+ending:"اس",
+qs:[
+["اسم رجل عربي مشهور","عباس"],
+["من يريد النوم يشعر بـ...","نعاس"],
+["التشابه والانسجام بين الأشياء","تجانس"],
+["أداة تستخدم للقياس","مقياس"],
+["الشدة والقوة في الحرب","بأس"]
+]
+},
+
+{
+ending:"ار",
+qs:[
+["مكان تهبط فيه الطائرات","مطار"],
+["من يسكن بالقرب منك","جار"],
+["ما يتخذه الإنسان بعد التفكير والاختيار","قرار"],
+["الوقت الممتد من شروق الشمس إلى غروبها","نهار"],
+["جمع تاجر","تجار"]
+]
+},
+
+{
+ending:"ام",
+qs:[
+["عكس الحرب","سلام"],
+["ما نراه أثناء النوم","منام"],
+["حسن استقبال الضيف وتقديره","إكرام"],
+["مجموعة من القواعد التي تنظّم العمل","نظام"],
+["اكتمال الشيء ووصوله إلى نهايته","تمام"]
+]
+},
+
+{
+ending:"ير",
+qs:[
+["الشخص المسؤول عن إدارة مؤسسة","مدير"],
+["عكس صغير","كبير"],
+["من لديه معرفة واسعة في مجال ما","خبير"],
+["شيء سهل وغير عسير","يسير"],
+["من يبشّر الناس بخبر سار","بشير"]
+]
+},
+
+{
+ending:"ان",
+qs:[
+["مكان مزروع بالأشجار والزهور","بستان"],
+["النداء الذي يعلن وقت الصلاة","أذان"],
+["من يشعر بحاجة شديدة إلى الماء","عطشان"],
+["من فاز وحقق الربح","ربحان"],
+["من امتلأ قلبه بالفرح","فرحان"]
+]
+},
+
+{
+ending:"اد",
+qs:[
+["عكس الفساد","رشاد"],
+["الحبر الذي يكتب به","مداد"],
+["جمع بلد","بلاد"],
+["اجتماع الناس وتكاتفهم","اتحاد"],
+["الدلالة على الطريق الصحيح","إرشاد"]
+]
+},
+
+{
+ending:"ون",
+qs:[
+["جمع مسلم في حالة الرفع","مسلمون"],
+["جمع معلم في حالة الرفع","معلمون"],
+["الذين حققوا النجاح","ناجحون"],
+["الذين يساعد بعضهم بعضًا","متعاونون"],
+["الذين يحضرون في الوقت المحدد","حاضرون"]
+]
+},
+
+{
+ending:"يل",
+qs:[
+["الوقت من غروب الشمس حتى الفجر","ليل"],
+["من يرشدك إلى الطريق","دليل"],
+["مصباح قديم يحمل باليد","قنديل"],
+["صاحب الأخلاق الكريمة والشريفة","نبيل"],
+["عكس قصير","طويل"]
+]
+},
+
+{
+ending:"اب",
+qs:[
+["شيء نقرأه وتوجد فيه صفحات","كتاب"],
+["مدخل البيت","باب"],
+["ما نشربه عند العطش","شراب"],
+["غطاء الرأس المعروف","حجاب"],
+["الرد على السؤال","جواب"]
+]
+},
+
+{
+ending:"ين",
+qs:[
+["عكس اليسار","يمين"],
+["من يحفظ الأمانة ويؤتمن","أمين"],
+["الاعتقاد الثابت الذي لا شك فيه","يقين"],
+["شيء مرتفع القيمة","ثمين"],
+["عكس قاسٍ في وصف الملمس أو الطبع","لين"]
+]
+}
+
+];
+
+var roundIndex = 0;
+var questionIndex = 0;
+var score = 0;
+var counted = false;
+
+function home() {
+
+document.getElementById("screen").innerHTML = `
+<div class="center">
+
+<h2>🧠 جاهزون للتحدي؟</h2>
+
+<p>
+10 جولات<br>
+50 سؤالاً
+</p>
+
+<button class="start" onclick="startGame()">
+ابدأ اللعبة 🚀
+</button>
+
+</div>
+`;
+
+}
+
+function startGame() {
+
+roundIndex = 0;
+questionIndex = 0;
+score = 0;
+
+renderQuestion();
+
+}
+
+function renderQuestion() {
+
+counted = false;
+
+var round = rounds[roundIndex];
+var question = round.qs[questionIndex];
+
+document.getElementById("screen").innerHTML = `
+
+<div class="info">
+
+<div>
+الجولة
+<strong>${roundIndex + 1} / ${rounds.length}</strong>
+</div>
+
+<div>
+السؤال
+<strong>${questionIndex + 1} / 5</strong>
+</div>
+
+<div>
+النقاط
+<strong>${score}</strong>
+</div>
+
+</div>
+
+<div class="ending">
+
+النهاية المشتركة
+
+<br>
+
+<span>
+ـ${round.ending}
+</span>
+
+</div>
+
+<div class="question">
+
+${question[0]}
+
+<div id="answer" class="answer">
+${question[1]}
+</div>
+
+</div>
+
+<div class="buttons">
+
+<button class="show" onclick="showAnswer()">
+👁️ إظهار الإجابة
+</button>
+
+<button class="correct" onclick="markCorrect()">
+✅ إجابة صحيحة
+</button>
+
+<button class="wrong" onclick="markWrong()">
+❌ إجابة خاطئة
+</button>
+
+<button class="next" onclick="nextQuestion()">
+السؤال التالي ←
+</button>
+
+</div>
+
+`;
+
+}
+
+function showAnswer() {
+
+document.getElementById("answer").style.display = "block";
+
+}
+
+function markCorrect() {
+
+if (!counted) {
+score++;
+counted = true;
+}
+
+showAnswer();
+
+}
+
+function markWrong() {
+
+counted = true;
+
+showAnswer();
+
+}
+
+function nextQuestion() {
+
+if (questionIndex < 4) {
+
+questionIndex++;
+
+renderQuestion();
+
+}
+
+else if (roundIndex < rounds.length - 1) {
+
+roundIndex++;
+questionIndex = 0;
+
+renderQuestion();
+
+}
+
+else {
+
+finishGame();
+
+}
+
+}
+
+function finishGame() {
+
+document.getElementById("screen").innerHTML = `
+
+<div class="center">
+
+<h1>🏆 انتهت اللعبة!</h1>
+
+<p style="font-size:28px">
+النتيجة النهائية
+</p>
+
+<h1>
+${score} / 50
+</h1>
+
+<button class="start" onclick="startGame()">
+🔄 العب مرة أخرى
+</button>
+
+</div>
+
+`;
+
+}
+
+home();
+
+</script>
+
+</body>
+</html>
